@@ -1,0 +1,5 @@
+node_modules
+dbconfig.js
+tnsnames.ora
+doc.txt
+run.sh
