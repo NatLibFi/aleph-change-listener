@@ -14,22 +14,15 @@ const Poller = require('./poller');
 const utils = require('../sync-tool/utils');
 const DEBUG_SQL = process.env.DEBUG_SQL;
 
+const ITERATOR_SAVE_FILE = '.auth-sync-service-iterators';
+
 oracledb.outFormat = oracledb.OBJECT;
 
 const POLL_INTERVAL_MS = 5000;
 
 const Z106ListenerForFIN001 = Z106Listener.create('FIN01');
 
-let iterators;
-try {
-  iterators = JSON.parse(fs.readFileSync('.auth-sync-service-iterators', 'utf8'));
-  iterators.Z106_iterator = moment(iterators.Z106_iterator);
-} catch(error) {
-  iterators = {
-    Z106_iterator: moment('20170524 16592223', 'YYYYMMDD HHmmssSS'),
-    Z115_iterator: '30000'
-  };
-}
+const initialIterators = loadIterators();
 
 oracledb.getConnection(dbConfig)
   .then(async connection => {
@@ -38,7 +31,7 @@ oracledb.getConnection(dbConfig)
       utils.decorateConnectionWithDebug(connection);
     }
 
-    const poller = Poller.create(POLL_INTERVAL_MS, pollAction(connection, iterators.Z106_iterator, iterators.Z115_iterator));
+    const poller = Poller.create(POLL_INTERVAL_MS, pollAction(connection, initialIterators.Z106_iterator, initialIterators.Z115_iterator));
     poller.start();
 
   }).catch(error => {
@@ -70,8 +63,8 @@ function pollAction(connection, date, changeId) {
     await handleChanges(z106changes, z115changes);
 
     // write iterators to file for next startup
-    const data = JSON.stringify({ Z106_iterator, Z115_iterator });
-    fs.writeFileSync('.auth-sync-service-iterators', data, 'utf8');
+    saveIterators({ Z106_iterator, Z115_iterator });
+    
   };
 }
 
@@ -79,4 +72,23 @@ async function handleChanges(z106changes, z115changes) {
   debug(`z106changes: ${z106changes.length}, z115changes: ${z115changes.length}`);
 
   console.log({z106changes, z115changes});
+}
+
+function loadIterators() {
+  let iterators;
+  try {
+    iterators = JSON.parse(fs.readFileSync(ITERATOR_SAVE_FILE, 'utf8'));
+    iterators.Z106_iterator = moment(iterators.Z106_iterator);    
+  } catch(error) {
+    // todo, get latests from database if iterators are missing.
+    iterators = {
+      Z106_iterator: moment('20170524 16592223', 'YYYYMMDD HHmmssSS'),
+      Z115_iterator: '30000'
+    };
+  }
+  
+  return iterators;
+}
+function saveIterators(data) {
+  fs.writeFileSync(ITERATOR_SAVE_FILE, JSON.stringify(data), 'utf8');
 }
