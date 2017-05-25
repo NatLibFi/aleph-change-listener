@@ -16,7 +16,7 @@ The tnsnames.ora file must be used for connection. This cane be done with TNS_AD
 
 Example:
 ```
-TNS_ADMIN=`pwd` LD_LIBRARY_PATH=/opt/instantclient_12_2/ node ora_connect.js
+TNS_ADMIN=`pwd` LD_LIBRARY_PATH=/opt/instantclient_12_2/ node auth-sync-service.js
 ```
 
 Example of tnsnames.ora 
@@ -26,7 +26,7 @@ tunnel =
  (DESCRIPTION =
    (ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 1521))
    (CONNECT_DATA =
-     (SID = VGER)
+     (SID = ALEPH20)
    )
  )
  ```

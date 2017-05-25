@@ -3,3 +3,5 @@ dbconfig.js
 tnsnames.ora
 doc.txt
 run.sh
+.auth-sync-service-iterators
+.stash_*

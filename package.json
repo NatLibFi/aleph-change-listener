@@ -4,12 +4,15 @@
   "description": "",
   "main": "auth-sync-service.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha *.spec.js",
+    "test:watch": "mocha *.spec.js -w"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "debug": "^2.6.8",
+    "lodash": "^4.17.4",
+    "moment": "^2.18.1",
     "oracledb": "^1.13.1"
   },
   "devDependencies": {
