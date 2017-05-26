@@ -60,6 +60,16 @@ function compactChanges(changes) {
 
 }
 
+
+async function getDefaultCursor(connection) {
+  debug('Querying default value for the cursor.');
+  const result = await connection.execute('select max(Z115_REC_KEY) as CHANGEID from FIN00.Z115', [], {resultSet: true});
+  const latestChangeRow = await result.resultSet.getRow();
+  console.log(latestChangeRow);
+  const latestChangeId = latestChangeRow.CHANGEID;
+  return latestChangeId;
+}
+
 function parseStatus(statusCode) {
   switch (statusCode) {
     case 'N': return STATUS.LOW_ADD;
@@ -103,5 +113,6 @@ function parseDate(dateNumber, timeString) {
 module.exports = {
   STATUS,
   getChangesSinceId,
-  getChangesSinceDate
+  getChangesSinceDate,
+  getDefaultCursor
 };
