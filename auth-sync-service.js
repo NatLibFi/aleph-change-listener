@@ -31,6 +31,8 @@ oracledb.getConnection(dbConfig)
       utils.decorateConnectionWithDebug(connection);
     }
 
+    // if initialIterators are not initialzied, then check from db for current iterators.
+
     const poller = Poller.create(POLL_INTERVAL_MS, pollAction(connection, initialIterators.Z106_iterator, initialIterators.Z115_iterator));
     poller.start();
 
@@ -70,6 +72,11 @@ function pollAction(connection, date, changeId) {
 
 async function handleChanges(z106changes, z115changes) {
   debug(`z106changes: ${z106changes.length}, z115changes: ${z115changes.length}`);
+
+  // merge changes
+  // move non common data to metadata
+  // common items: recordId, libraty
+  // date -> metadata.Z106Date and metadata.Z115Date
 
   console.log({z106changes, z115changes});
 }
