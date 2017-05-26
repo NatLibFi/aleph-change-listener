@@ -1,8 +1,8 @@
 {
-  "name": "auth-sync-service",
+  "name": "aleph-change-listener",
   "version": "1.0.0",
   "description": "",
-  "main": "auth-sync-service.js",
+  "main": "aleph-change-listener.js",
   "scripts": {
     "test": "mocha *.spec.js",
     "test:watch": "mocha *.spec.js -w"

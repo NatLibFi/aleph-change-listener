@@ -37,6 +37,9 @@ function create(base, stashPrefix='stash') {
     debug('Querying default value for the cursor.');
     const result = await connection.execute(`select * from ${base}.z106 ORDER BY Z106_UPDATE_DATE DESC, Z106_TIME DESC`, [], {resultSet: true});
     const latestChangeRow = await result.resultSet.getRow();
+    if (latestChangeRow === null) {
+      return moment.now();
+    }
     const latestChange = parseZ106Row(latestChangeRow);
 
     // ensure that the changes from current minute are not returned when cursor is first used.
@@ -83,11 +86,11 @@ function writePersistedChanges(file, data) {
 
 function parseZ106Row(row) {
   const { Z106_REC_KEY, Z106_SECONDARY_KEY, Z106_CATALOGER, Z106_LEVEL, Z106_UPDATE_DATE, Z106_LIBRARY, Z106_TIME } = row;
-    
+  
   return {
     recordId: Z106_REC_KEY,
     secondaryKey: Z106_SECONDARY_KEY,
-    user: Z106_CATALOGER.trim(),
+    user: Z106_CATALOGER && Z106_CATALOGER.trim(),
     changeLevel: Z106_LEVEL,
     date: parseDate(Z106_UPDATE_DATE, Z106_TIME),
     library: Z106_LIBRARY
