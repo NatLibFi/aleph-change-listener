@@ -20,6 +20,7 @@ async function create(connection, options, onChangeCallback) {
   const Z106Bases = _.get(options, 'Z106Bases', []);
   const POLL_INTERVAL_MS = _.get(options, 'pollIntervalMs', DEFAULT_POLL_INTERVAL_MS);
   const CURSOR_SAVE_FILE = _.get(options, 'cursorSaveFile', DEFAULT_CURSOR_SAVE_FILE);
+  const Z115Base = _.get(options, 'Z115Base');
   
   debug(`Bases for Z106 ${Z106Bases}`);
   debug(`Polling interval ${POLL_INTERVAL_MS}`);
@@ -39,7 +40,7 @@ async function create(connection, options, onChangeCallback) {
   }));
   
   if (!initialCursors.Z115_cursor) {
-    initialCursors.Z115_cursor = await Z115Listener.getDefaultCursor(connection);
+    initialCursors.Z115_cursor = await Z115Listener.getDefaultCursor(Z115Base, connection);
   }
 
   const poller = Poller.create(POLL_INTERVAL_MS, pollAction(connection, initialCursors));
@@ -61,7 +62,7 @@ async function create(connection, options, onChangeCallback) {
         return changes;
       }));
       
-      const z115changes = await Z115Listener.getChangesSinceId(connection, cursors.Z115_cursor);
+      const z115changes = await Z115Listener.getChangesSinceId(Z115Base, connection, cursors.Z115_cursor);
       
       if (z115changes.length) {
         cursors.Z115_cursor = _.last(z115changes).changeId;

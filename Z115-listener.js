@@ -10,10 +10,10 @@ const STATUS = {
 };
 
 
-async function getChangesSinceId(connection, sinceChangeId) {  
+async function getChangesSinceId(base, connection, sinceChangeId) {  
   debug(`Fetching changes since ${sinceChangeId}`);
   
-  const result = await connection.execute('select * from FIN00.Z115 where Z115_REC_KEY > :sinceChangeId', [sinceChangeId], {resultSet: true});
+  const result = await connection.execute(`select * from ${base}.Z115 where Z115_REC_KEY > :sinceChangeId`, [sinceChangeId], {resultSet: true});
   
   const rows = await utils.readAllRows(result.resultSet);
 
@@ -23,11 +23,11 @@ async function getChangesSinceId(connection, sinceChangeId) {
   
 }
 
-async function getChangesSinceDate(connection, sinceDate) {
+async function getChangesSinceDate(base, connection, sinceDate) {
   debug(`Fetching changes since ${sinceDate}`);
   const date = sinceDate.format('YYYYMMDD');
   const time = sinceDate.format('HHmmssSS');
-  const result = await connection.execute('select /*+ INDEX(Z115_today_date Z115_DATE_ID) INDEX(Z115_today_time Z115_TIME_ID) */ * from FIN00.Z115 where Z115_today_date >= :datevar and z115_today_time > :timevar ORDER BY Z115_today_date, z115_today_time ASC', [date, time], {resultSet: true});
+  const result = await connection.execute(`select /*+ INDEX(Z115_today_date Z115_DATE_ID) INDEX(Z115_today_time Z115_TIME_ID) */ * from ${base}.Z115 where Z115_today_date >= :datevar and z115_today_time > :timevar ORDER BY Z115_today_date, z115_today_time ASC`, [date, time], {resultSet: true});
   
   const rows = await utils.readAllRows(result.resultSet);
 
@@ -59,9 +59,9 @@ function compactChanges(changes) {
   return compacted.sort((a, b) => a.date - b.date);
 }
 
-async function getDefaultCursor(connection) {
+async function getDefaultCursor(base, connection) {
   debug('Querying default value for the cursor.');
-  const result = await connection.execute('select max(Z115_REC_KEY) as CHANGEID from FIN00.Z115', [], {resultSet: true});
+  const result = await connection.execute(`select max(Z115_REC_KEY) as CHANGEID from ${base}.Z115`, [], {resultSet: true});
   const latestChangeRow = await result.resultSet.getRow();
   const latestChangeId = latestChangeRow.CHANGEID;
   return latestChangeId;
