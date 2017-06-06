@@ -4,7 +4,6 @@ const moment = require('moment');
 const createDebug = require('debug');
 const utils = require('./utils');
 
-
 function create(base, stashPrefix='stash') {
   const debug = createDebug(`Z106-Listener-for${base}`);
   const persistedChangesFilename = `.${stashPrefix}_${base}`;
@@ -15,12 +14,12 @@ function create(base, stashPrefix='stash') {
     const date = sinceDate.format('YYYYMMDD');
     const time = sinceDate.format('HHmm');
 
-    const result = await connection.execute(`select * from ${base}.z106 where Z106_UPDATE_DATE >= :dateVar AND Z106_TIME >= :timeVar ORDER BY Z106_UPDATE_DATE, Z106_TIME ASC`, [date, time], {resultSet: true});
+    const result = await connection.execute(`select * from ${base}.z106 where Z106_UPDATE_DATE > :dateVar OR (Z106_UPDATE_DATE = :dateVar AND Z106_TIME >= :timeVar) ORDER BY Z106_UPDATE_DATE, Z106_TIME ASC`, [date, date, time], {resultSet: true});
 
     const rows = await utils.readAllRows(result.resultSet);
 
     const changes = rows.map(parseZ106Row);
-
+    
     // Since resolution is 1 minute, persist result from last minute to file
     // after fetch, filter out stuff that was persisted 
 
@@ -47,6 +46,31 @@ function create(base, stashPrefix='stash') {
     return _.last(latestChanges).date;
   }
 
+  function readPersistedChanges(file) {
+    try {
+      const data = fs.readFileSync(file, 'utf8');
+      const changes = JSON.parse(data);
+      return changes.map(change => {
+        return Object.assign(change, { date: moment(change.date) });
+      });
+    } catch(error) {
+      return [];
+    }
+  }
+
+  function writePersistedChanges(file, data) {
+    debug(`Saving ${data.length} changes`);
+    return new Promise((resolve, reject) => {
+      fs.writeFile(file, JSON.stringify(data), 'utf8', (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();  
+        }
+      });
+    });
+  }
+
   return {
     getChangesSinceDate,
     getDefaultCursor
@@ -58,30 +82,6 @@ function isEqualChangeObject(a, b) {
   return _.isEqual(_.omit(a, 'date'), _.omit(b, 'date')) && a.date.isSame(b.date);
 }
 
-function readPersistedChanges(file) {
-  try {
-    const data = fs.readFileSync(file, 'utf8');
-    const changes = JSON.parse(data);
-    return changes.map(change => {
-      return Object.assign(change, { date: moment(change.date) });
-    });
-  } catch(error) {
-    return [];
-  }
-}
-
-function writePersistedChanges(file, data) {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(file, JSON.stringify(data), 'utf8', (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();  
-      }
-    });
-  });
-  
-}
 
 
 function parseZ106Row(row) {
