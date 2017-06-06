@@ -111,11 +111,13 @@ async function create(connection, options, onChangeCallback) {
       .map(changeGroup => _.merge({}, ...changeGroup))
       .value();
 
-    handleChanges(changes);
+    await handleChanges(changes);
   }
 
   function handleChanges(changes) {
-    onChangeCallback && onChangeCallback.call(null, changes);
+    if (onChangeCallback) {
+      return onChangeCallback.call(null, changes);
+    }
   }
 
   function loadCursors(CURSOR_SAVE_FILE) {
