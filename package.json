@@ -7,8 +7,11 @@
     "test": "mocha *.spec.js",
     "test:watch": "mocha *.spec.js -w"
   },
-  "author": "",
+  "author": "Pasi Tuominen",
   "license": "ISC",
+  "engines": { 
+    "node": ">= 7.10.0" 
+  },
   "dependencies": {
     "debug": "^2.6.8",
     "lodash": "^4.17.4",
