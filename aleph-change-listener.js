@@ -11,6 +11,7 @@ const Z106Listener = require('./Z106-listener');
 const Poller = require('./poller');
 
 const DEFAULT_CURSOR_SAVE_FILE = '.aleph-changelistener-cursors';
+const DEFAULT_Z106_STASH_PREFIX = 'stash';
 const DEFAULT_POLL_INTERVAL_MS = 5000;
 
 oracledb.outFormat = oracledb.OBJECT;
@@ -20,6 +21,7 @@ async function create(connection, options, onChangeCallback) {
   const Z106Bases = _.get(options, 'Z106Bases', []);
   const POLL_INTERVAL_MS = _.get(options, 'pollIntervalMs', DEFAULT_POLL_INTERVAL_MS);
   const CURSOR_SAVE_FILE = _.get(options, 'cursorSaveFile', DEFAULT_CURSOR_SAVE_FILE);
+  const Z106_STASH_PREFIX = _.get(options, 'Z106StashPrefix', DEFAULT_Z106_STASH_PREFIX);
   const Z115Base = _.get(options, 'Z115Base');
   
   debug(`Bases for Z106 ${Z106Bases}`);
@@ -27,7 +29,7 @@ async function create(connection, options, onChangeCallback) {
   debug(`Using cursor file ${CURSOR_SAVE_FILE}`);
 
   const Z106CursorKeys = Z106Bases.reduce((keys, base) => _.set(keys, base, `Z106_FOR_${base}`), {});
-  const Z106Listeners = Z106Bases.reduce((listeners, base) => _.set(listeners, base, Z106Listener.create(base)), {});
+  const Z106Listeners = Z106Bases.reduce((listeners, base) => _.set(listeners, base, Z106Listener.create(base, Z106_STASH_PREFIX)), {});
 
 
   const initialCursors = loadCursors(CURSOR_SAVE_FILE);
