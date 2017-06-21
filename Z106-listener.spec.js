@@ -72,7 +72,8 @@ describe('Z106-Listener', () => {
 
     fakeConnection.execute.resolves({
       resultSet: {
-        getRow: getRowStub
+        getRow: getRowStub,
+        close: sinon.spy()
       }
     });
   });
