@@ -67,6 +67,7 @@ async function create(connection, options, onChangeCallback) {
         return changes;
       }));
       
+      debug('Loading changes from Z115');
       const z115changes = await Z115Listener.getChangesSinceId(Z115Base, connection, cursors.Z115_cursor);
       
       if (z115changes.length) {
@@ -111,13 +112,13 @@ async function create(connection, options, onChangeCallback) {
     });
 
     // new changes came
-    const latestChanges = _.chain(z106ForMerge).concat(z115ForMerge); //TODO: rename forMerge
+    const latestChanges = _.concat(z106ForMerge, z115ForMerge); //TODO: rename forMerge
     // load changes-queue from file (or memmory can be used for optmization)
     // changeQueue is like: [[ch1, ch2],[ch3, ch2, ch4]] 
     const changesQueue = loadChangesQueue();
     // push new changes to queue
     changesQueue.push(latestChanges);
-
+    debug('changesQueue', changesQueue);
     if (changesQueue.length > 1) {
 
       // shift/pop earliest changes from queue, 
@@ -146,7 +147,9 @@ async function create(connection, options, onChangeCallback) {
   }
 
   function handleChanges(changes) {
+    debug('handleChanges', changes);
     if (onChangeCallback) {
+            
       return onChangeCallback.call(null, changes);
     }
   }
@@ -184,12 +187,14 @@ async function create(connection, options, onChangeCallback) {
         momentizeChangeMetaDate(change, 'Z115');
       });
 
+      debug('reading changesqueue', changesQueue);
       return changesQueue;
     } catch(error) {
       return [];
     }
   }
   function saveChangesQueue(changesQueue) {
+    debug('writing changesqueue', changesQueue);
     fs.writeFileSync(CHANGES_QUEUE_FILE, JSON.stringify(changesQueue), 'utf8');
   }
 
