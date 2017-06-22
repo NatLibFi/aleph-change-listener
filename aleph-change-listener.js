@@ -13,6 +13,7 @@ const Poller = require('./poller');
 const DEFAULT_CURSOR_SAVE_FILE = '.aleph-changelistener-cursors';
 const DEFAULT_Z106_STASH_PREFIX = 'stash';
 const DEFAULT_POLL_INTERVAL_MS = 5000;
+const DEFAULT_CHANGES_QUEUE_FILE = '.aleph-changelistener-changesqueue';
 
 oracledb.outFormat = oracledb.OBJECT;
 
@@ -22,6 +23,8 @@ async function create(connection, options, onChangeCallback) {
   const POLL_INTERVAL_MS = _.get(options, 'pollIntervalMs', DEFAULT_POLL_INTERVAL_MS);
   const CURSOR_SAVE_FILE = _.get(options, 'cursorSaveFile', DEFAULT_CURSOR_SAVE_FILE);
   const Z106_STASH_PREFIX = _.get(options, 'Z106StashPrefix', DEFAULT_Z106_STASH_PREFIX);
+  const CHANGES_QUEUE_FILE = _.get(options, 'changesQueueSaveFile', DEFAULT_CHANGES_QUEUE_FILE);
+
   const Z115Base = _.get(options, 'Z115Base');
   
   debug(`Bases for Z106 ${Z106Bases}`);
@@ -64,6 +67,7 @@ async function create(connection, options, onChangeCallback) {
         return changes;
       }));
       
+      debug('Loading changes from Z115');
       const z115changes = await Z115Listener.getChangesSinceId(Z115Base, connection, cursors.Z115_cursor);
       
       if (z115changes.length) {
@@ -107,17 +111,45 @@ async function create(connection, options, onChangeCallback) {
       };
     });
 
-    const changes =_.chain(z106ForMerge).concat(z115ForMerge)
-      .groupBy(change => `${change.recordId}-${change.library}`)
-      .values()
-      .map(changeGroup => _.merge({}, ...changeGroup))
-      .value();
+    // new changes came
+    const latestChanges = _.concat(z106ForMerge, z115ForMerge); //TODO: rename forMerge
+    // load changes-queue from file (or memmory can be used for optmization)
+    // changeQueue is like: [[ch1, ch2],[ch3, ch2, ch4]] 
+    const changesQueue = loadChangesQueue();
+    // push new changes to queue
+    changesQueue.push(latestChanges);
+    debug('changesQueue', changesQueue);
+    if (changesQueue.length > 1) {
 
-    await handleChanges(changes);
+      // shift/pop earliest changes from queue, 
+      const oldestChanges = changesQueue.shift();
+      // make keygroup of earliset changes
+      const key = change => `${change.recordId}-${change.library}`;
+      const keyGroup = oldestChanges.map(key);
+      // filter all changes with that keygroup
+      const lookaheadChanges = _.flatten(changesQueue).filter(change => _.includes(keyGroup, key(change)));
+      const filteredChangesQueue = changesQueue.map(changesArray => _.without(changesArray, ...lookaheadChanges));
+      const changesForEmitting = _.concat(oldestChanges, lookaheadChanges);
+      // handle them
+      // save changes-queue to file (and update memory is optimization)
+
+      const changes = _.chain(changesForEmitting)
+        .groupBy(change => `${change.recordId}-${change.library}`)
+        .values()
+        .map(changeGroup => _.merge({}, ...changeGroup))
+        .value();
+
+      await handleChanges(changes);
+      saveChangesQueue(filteredChangesQueue);
+    } else {
+      saveChangesQueue(changesQueue);
+    }
   }
 
   function handleChanges(changes) {
+    debug('handleChanges', changes);
     if (onChangeCallback) {
+            
       return onChangeCallback.call(null, changes);
     }
   }
@@ -137,6 +169,33 @@ async function create(connection, options, onChangeCallback) {
 
   function saveCursors(CURSOR_SAVE_FILE, data) {
     fs.writeFileSync(CURSOR_SAVE_FILE, JSON.stringify(data), 'utf8');
+  }
+
+  function loadChangesQueue() {
+    try {
+      const changesQueue = JSON.parse(fs.readFileSync(CHANGES_QUEUE_FILE, 'utf8'));
+
+      const momentizeChangeMetaDate = (change, ZDB) => {
+        const date = _.get(change, ['meta', ZDB]);
+        if (date) {
+          _.set(change, ['meta', ZDB, 'date'], moment(date));
+        }
+      };
+
+      _.flatten(changesQueue).forEach(change => {
+        momentizeChangeMetaDate(change, 'Z106');
+        momentizeChangeMetaDate(change, 'Z115');
+      });
+
+      debug('reading changesqueue', changesQueue);
+      return changesQueue;
+    } catch(error) {
+      return [];
+    }
+  }
+  function saveChangesQueue(changesQueue) {
+    debug('writing changesqueue', changesQueue);
+    fs.writeFileSync(CHANGES_QUEUE_FILE, JSON.stringify(changesQueue), 'utf8');
   }
 
   return {
