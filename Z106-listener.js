@@ -6,7 +6,7 @@ const utils = require('./utils');
 
 function create(base, stashPrefix='stash') {
   const debug = createDebug(`Z106-Listener-for${base}`);
-  const persistedChangesFilename = `.${stashPrefix}_${base}`;
+  const persistedChangesFilename = `${stashPrefix}_${base}`;
   let alreadyPassedChanges = readPersistedChanges(persistedChangesFilename);
 
   async function getChangesSinceDate(connection, sinceDate) {
@@ -59,7 +59,7 @@ function create(base, stashPrefix='stash') {
   }
 
   function writePersistedChanges(file, data) {
-    debug(`Saving ${data.length} changes`);
+    debug(`Remembering ${data.length} changes`);
     return new Promise((resolve, reject) => {
       fs.writeFile(file, JSON.stringify(data), 'utf8', (err) => {
         if (err) {
