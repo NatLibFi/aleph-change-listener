@@ -24,6 +24,7 @@ async function create(connection, options, onChangeCallback) {
   const CURSOR_SAVE_FILE = _.get(options, 'cursorSaveFile', DEFAULT_CURSOR_SAVE_FILE);
   const Z106_STASH_PREFIX = _.get(options, 'Z106StashPrefix', DEFAULT_Z106_STASH_PREFIX);
   const CHANGES_QUEUE_FILE = _.get(options, 'changesQueueSaveFile', DEFAULT_CHANGES_QUEUE_FILE);
+  const logger = _.get(options, 'logger', { log: console.log.bind(console) }); //eslint-disable-line no-console
 
   const Z115Base = _.get(options, 'Z115Base');
   
@@ -40,16 +41,17 @@ async function create(connection, options, onChangeCallback) {
   // if initialCursors are not initialzied, then check from db for current cursors.
   await Promise.all(Z106Bases.map(async base => {
     if (!initialCursors[Z106CursorKeys[base]]) {
+      logger.log('info', `Loading default value for Z106 cursor for ${base}`);
       initialCursors[Z106CursorKeys[base]] = await Z106Listeners[base].getDefaultCursor(connection);
     }
   }));
   
   if (!initialCursors.Z115_cursor) {
+    logger.log('info', 'Loading default value for Z115 cursor');
     initialCursors.Z115_cursor = await Z115Listener.getDefaultCursor(Z115Base, connection);
   }
 
   const poller = Poller.create(POLL_INTERVAL_MS, pollAction(connection, initialCursors));
-
 
   function pollAction(connection, initialCursors) {
 
@@ -162,7 +164,11 @@ async function create(connection, options, onChangeCallback) {
       });
       return cursors;
     } catch(error) {
-      console.error(`Failed to load cursors from file: ${error.message}`); //eslint-disable-line no-console
+      if (error.code === 'ENOENT') {
+        logger.log('warn', 'Cursor file not found, starting without cursor file.');
+      } else {
+        logger.log('error', `Failed to load cursors from file: ${error.message}`);
+      }
       return {}; 
     }
   }
