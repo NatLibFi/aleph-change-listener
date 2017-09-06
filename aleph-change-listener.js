@@ -59,8 +59,9 @@ async function create(connection, options, onChangeCallback) {
 
     return async function() {
 
-      debug('Loading changes from Z106');
+      
       const z106changes = await Promise.all(Z106Bases.map(async base => {
+        logger.log('info', `Loading changes from Z106/${base}`);
         const cursor = cursors[Z106CursorKeys[base]];
         const changes = await Z106Listeners[base].getChangesSinceDate(connection, cursor);
         if (changes.length) {
@@ -69,7 +70,7 @@ async function create(connection, options, onChangeCallback) {
         return changes;
       }));
       
-      debug('Loading changes from Z115');
+      logger.log('info', 'Loading changes from Z115');
       const z115changes = await Z115Listener.getChangesSinceId(Z115Base, connection, cursors.Z115_cursor);
       
       if (z115changes.length) {
@@ -114,8 +115,8 @@ async function create(connection, options, onChangeCallback) {
     });
 
     // new changes came
-    const latestChanges = _.concat(z106ForMerge, z115ForMerge); //TODO: rename forMerge
-    // load changes-queue from file (or memmory can be used for optmization)
+    const latestChanges = _.concat(z106ForMerge, z115ForMerge);
+    // load changes-queue from file
     // changeQueue is like: [[ch1, ch2],[ch3, ch2, ch4]] 
     const changesQueue = loadChangesQueue();
     // push new changes to queue
@@ -132,8 +133,6 @@ async function create(connection, options, onChangeCallback) {
       const lookaheadChanges = _.flatten(changesQueue).filter(change => _.includes(keyGroup, key(change)));
       const filteredChangesQueue = changesQueue.map(changesArray => _.without(changesArray, ...lookaheadChanges));
       const changesForEmitting = _.concat(oldestChanges, lookaheadChanges);
-      // handle them
-      // save changes-queue to file (and update memory is optimization)
 
       const changes = _.chain(changesForEmitting)
         .groupBy(change => `${change.recordId}-${change.library}`)
@@ -150,6 +149,7 @@ async function create(connection, options, onChangeCallback) {
 
   function handleChanges(changes) {
     debug('handleChanges', changes);
+    logger.log(`Emitting ${changes.length} changes.`);
     if (onChangeCallback) {
             
       return onChangeCallback.call(null, changes);
