@@ -1,10 +1,9 @@
 const _ = require('lodash');
 const sinon = require('sinon');
 const expect = require('chai').expect;
-const moment = require('moment');
 const fs = require('fs');
 const AlephChangeListener = require('./aleph-change-listener');
-
+const debug = require('debug')('aleph-change-listener');
 
 const Z115Listener = require('./Z115-listener');
 const Z106Listener = require('./Z106-listener');
@@ -14,11 +13,11 @@ const Poller = require('./poller');
 describe('aleph-change-listener', () => {
 
   const options = {
-    Z106Bases: ['USR00']
+    Z106Bases: ['USR00'],
+    logger: { log: debug.bind(debug)}
   };
   let fakeConnection;
   let onChangeCb;
-  let alephChangeListener;
   let pollAction;
   let Z115getChangesSinceId;
   let Z116getChangesSinceDate;
@@ -58,7 +57,7 @@ describe('aleph-change-listener', () => {
       };
     });
 
-    alephChangeListener = await AlephChangeListener.create(fakeConnection, options, onChangeCb);
+    await AlephChangeListener.create(fakeConnection, options, onChangeCb);
 
   });
   afterEach(() => sandbox.restore());
