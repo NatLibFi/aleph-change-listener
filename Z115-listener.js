@@ -9,11 +9,28 @@ const STATUS = {
   LOW_DELETE: 'LOW_DELETE'
 };
 
+async function getNextChangeId(base, connection, changeId) {
+
+  const result = await connection.execute(`select * from ${base}.Z115 where Z115_REC_KEY > :sinceChangeId ORDER BY Z115_REC_KEY ASC`, [changeId], {resultSet: true});
+  const nextRow = await result.resultSet.getRow();
+  if (nextRow === null) {
+    return null;
+  }
+  const row = parseZ115Row(nextRow);
+  const nextChangeId = row.changeId;
+
+  return nextChangeId;
+}
 
 async function getChangesSinceId(base, connection, sinceChangeId) {  
   debug(`Fetching changes since ${sinceChangeId}`);
   
-  const result = await connection.execute(`select * from ${base}.Z115 where Z115_REC_KEY > :sinceChangeId`, [sinceChangeId], {resultSet: true});
+  const nextChangeId = await getNextChangeId(base, connection, sinceChangeId);
+  if (nextChangeId === null) {
+    return [];
+  }
+
+  const result = await connection.execute(`select * from ${base}.Z115 where Z115_REC_KEY = :nextChangeId`, [nextChangeId], {resultSet: true});
   
   const rows = await utils.readAllRows(result.resultSet);
 
@@ -78,7 +95,7 @@ function parseStatus(statusCode) {
 function parseZ115Row(row) {
   const { Z115_REC_KEY, Z115_LIBRARY, Z115_OWN, Z115_STATUS, Z115_TODAY_DATE, Z115_TODAY_TIME, Z115_NO_LINES, Z115_TAB } = row;
 
-  // Z115_TAB on tietueen 001.
+  // Z115_TAB is equal to record's 001.
 
   return {
     changeId: Z115_REC_KEY,

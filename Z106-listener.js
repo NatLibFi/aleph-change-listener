@@ -9,16 +9,51 @@ function create(base, stashPrefix='stash') {
   const persistedChangesFilename = `${stashPrefix}_${base}`;
   let alreadyPassedChanges = readPersistedChanges(persistedChangesFilename);
 
-  async function getChangesSinceDate(connection, sinceDate) {
-    debug(`Fetching changes since ${sinceDate}`);
+  async function getNextDate(connection, sinceDate) {
+    
     const date = sinceDate.format('YYYYMMDD');
     const time = sinceDate.format('HHmm');
 
-    const result = await connection.execute(`select * from ${base}.z106 where Z106_UPDATE_DATE > :dateVar OR (Z106_UPDATE_DATE = :dateVar AND Z106_TIME >= :timeVar) ORDER BY Z106_UPDATE_DATE, Z106_TIME ASC`, [date, date, time], {resultSet: true});
+    const result = await connection.execute(`select * from ${base}.z106 where Z106_UPDATE_DATE > :dateVar OR (Z106_UPDATE_DATE = :dateVar AND Z106_TIME > :timeVar) ORDER BY Z106_UPDATE_DATE, Z106_TIME ASC`, [date, date, time], {resultSet: true});
+    const nextRow = await result.resultSet.getRow();
+    if (nextRow === null) {
+      return null;
+    }
+    
+    const row = parseZ106Row(nextRow);
+    return row.date;
+  }
 
+  async function getChangesAtDate(connection, sinceDate) {
+    const date = sinceDate.format('YYYYMMDD');
+    const time = sinceDate.format('HHmm');
+
+    const result = await connection.execute(`select * from ${base}.z106 where Z106_UPDATE_DATE = :dateVar AND Z106_TIME = :timeVar ORDER BY Z106_UPDATE_DATE, Z106_TIME ASC`, [date, time], {resultSet: true});
     const rows = await utils.readAllRows(result.resultSet);
 
     const changes = rows.map(parseZ106Row);
+    return changes;    
+  }
+
+  async function getChangesSinceDate(connection, sinceDate) {
+    debug(`Fetching changes at ${sinceDate}`);
+
+    // Fetch current minute and next minute
+
+    const currentDateChanges = await getChangesAtDate(connection, sinceDate);
+    
+    const nextDate = await getNextDate(connection, sinceDate);
+    debug(`Fetching changes at ${nextDate}`);
+    
+    let nextDateChanges = [];
+    if (nextDate) {
+      nextDateChanges = await getChangesAtDate(connection, nextDate);
+    }
+
+    debug(`Changes at ${sinceDate}: ${currentDateChanges.length}`);
+    debug(`Changes at ${nextDate}: ${nextDateChanges.length}`);
+    
+    const changes = _.concat(currentDateChanges, nextDateChanges);
     
     // Since resolution is 1 minute, persist result from last minute to file
     // after fetch, filter out stuff that was persisted 
@@ -28,8 +63,13 @@ function create(base, stashPrefix='stash') {
     const newChanges = _.differenceWith(changes, alreadyPassedChanges, isEqualChangeObject);
     alreadyPassedChanges = setOfChangesToPersist;
     await writePersistedChanges(persistedChangesFilename, setOfChangesToPersist);
-
-    return _.uniqWith(newChanges, isEqualChangeObject);
+    
+    debug(`new changes: ${newChanges.length}`);
+    
+    return {
+      changes: _.uniqWith(newChanges, isEqualChangeObject),
+      nextCursor: dateOfLastChange
+    };
   }
 
   async function getDefaultCursor(connection) {
@@ -41,9 +81,10 @@ function create(base, stashPrefix='stash') {
     }
     const latestChange = parseZ106Row(latestChangeRow);
 
+    // Call getChangesSinceDate to persist changes of current minute to
     // ensure that the changes from current minute are not returned when cursor is first used.
-    const latestChanges = await getChangesSinceDate(connection, latestChange.date);
-    return _.last(latestChanges).date;
+    const { nextCursor } = await getChangesSinceDate(connection, latestChange.date);
+    return nextCursor;
   }
 
   function readPersistedChanges(file) {

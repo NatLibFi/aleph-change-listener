@@ -84,8 +84,9 @@ describe('Z106-Listener', () => {
   it('should return list of changes', async () => {
     getRowStub.onCall(0).resolves(fakeChanges[0]);
     getRowStub.onCall(1).resolves(null);
+    getRowStub.onCall(2).resolves(null);
 
-    const changes = await z106Listener.getChangesSinceDate(fakeConnection, fakeDate);
+    const { changes } = await z106Listener.getChangesSinceDate(fakeConnection, fakeDate);
     expect(changes.length).to.equal(1);
   });
 
@@ -93,17 +94,19 @@ describe('Z106-Listener', () => {
     getRowStub.onCall(0).resolves(fakeChanges[0]);
     getRowStub.onCall(1).resolves(fakeChanges[1]);
     getRowStub.onCall(2).resolves(null);
-
-    getRowStub.onCall(3).resolves(fakeChanges[1]);
-    getRowStub.onCall(4).resolves(fakeChanges[2]);
-    getRowStub.onCall(5).resolves(fakeChanges[3]);
-    getRowStub.onCall(6).resolves(null);
-
+    getRowStub.onCall(3).resolves(null);    
+    
+    getRowStub.onCall(4).resolves(fakeChanges[1]);
+    getRowStub.onCall(5).resolves(fakeChanges[2]);
+    getRowStub.onCall(6).resolves(fakeChanges[3]);
+    getRowStub.onCall(7).resolves(null);
+    getRowStub.onCall(8).resolves(null);
+    
     const changesAfterFirstRequest = await z106Listener.getChangesSinceDate(fakeConnection, fakeDate);
-    expect(_.map(changesAfterFirstRequest, 'secondaryKey')).to.eql(['CHANGE-1', 'CHANGE-2']);
+    expect(_.map(changesAfterFirstRequest.changes, 'secondaryKey')).to.eql(['CHANGE-1', 'CHANGE-2']);
 
     const changesAfterSecondRequest = await z106Listener.getChangesSinceDate(fakeConnection, fakeDate);
-    expect(_.map(changesAfterSecondRequest, 'secondaryKey')).to.eql(['CHANGE-3', 'CHANGE-4']);
+    expect(_.map(changesAfterSecondRequest.changes, 'secondaryKey')).to.eql(['CHANGE-3', 'CHANGE-4']);
     
 
   });
