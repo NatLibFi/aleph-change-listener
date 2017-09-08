@@ -19,6 +19,7 @@ function create(base, stashPrefix='stash') {
     if (nextRow === null) {
       return null;
     }
+    
     const row = parseZ106Row(nextRow);
     return row.date;
   }

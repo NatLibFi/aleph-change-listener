@@ -64,14 +64,14 @@ describe('aleph-change-listener', () => {
 
   it('First call should keep changes stashed', async () => {
     Z115getChangesSinceId.returns([]);
-    Z116getChangesSinceDate.returns([]);
+    Z116getChangesSinceDate.returns({changes: [], nextCursor: null });
     await pollAction();
     expect(onChangeCb.callCount).to.equal(0);
   });
 
   it('Given two empty polls, it should emit 0 changes', async () => {
     Z115getChangesSinceId.returns([]);
-    Z116getChangesSinceDate.returns([]);
+    Z116getChangesSinceDate.returns({changes: [], nextCursor: null });
     await pollAction();
     await pollAction();
     expect(onChangeCb.callCount).to.equal(1);
@@ -81,7 +81,7 @@ describe('aleph-change-listener', () => {
   it('Given two non-empty polls, it should emit changes from first polling', async () => {
     Z115getChangesSinceId.onCall(0).returns([fakeChange('001', 'lib1')]);
     Z115getChangesSinceId.onCall(1).returns([fakeChange('002', 'lib1')]);
-    Z116getChangesSinceDate.returns([]);
+    Z116getChangesSinceDate.returns({changes: [], nextCursor: null });
 
     await pollAction();
     await pollAction();
@@ -93,13 +93,13 @@ describe('aleph-change-listener', () => {
 
   it('Given two non-empty polls, it should emit changes from first polling and any changes from the second polling if it is about same record', async () => {
     Z115getChangesSinceId.onCall(0).returns([fakeChange('001', 'lib1')]);
-    Z116getChangesSinceDate.onCall(0).returns([]);
+    Z116getChangesSinceDate.onCall(0).returns({changes: [], nextCursor: null });
     
     Z115getChangesSinceId.onCall(1).returns([fakeChange('002', 'lib1')]);
-    Z116getChangesSinceDate.onCall(1).returns([fakeChange('001', 'lib1')]);
+    Z116getChangesSinceDate.onCall(1).returns({ changes: [fakeChange('001', 'lib1')], nextCursor: null});
     
     Z115getChangesSinceId.onCall(2).returns([]);
-    Z116getChangesSinceDate.onCall(2).returns([]);
+    Z116getChangesSinceDate.onCall(2).returns({changes: [], nextCursor: null });
     
     await pollAction();
     await pollAction();
