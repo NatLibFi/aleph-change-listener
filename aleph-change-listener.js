@@ -61,16 +61,17 @@ async function create(connection, options, onChangeCallback) {
 
       
       const z106changes = await Promise.all(Z106Bases.map(async base => {
-        logger.log('info', `Loading changes from Z106/${base}`);
         const cursor = cursors[Z106CursorKeys[base]];
-        const changes = await Z106Listeners[base].getChangesSinceDate(connection, cursor);
+        logger.log('info', `Loading changes from Z106/${base} at ${cursor}`);
+        const { changes, nextCursor } = await Z106Listeners[base].getChangesSinceDate(connection, cursor);
         if (changes.length) {
-          cursors[Z106CursorKeys[base]] = _.last(changes).date;  
+          cursors[Z106CursorKeys[base]] = nextCursor;  
         }
+        
         return changes;
       }));
       
-      logger.log('info', 'Loading changes from Z115');
+      logger.log('info', `Loading changes from Z115 at ${cursors.Z115_cursor}`);
       const z115changes = await Z115Listener.getChangesSinceId(Z115Base, connection, cursors.Z115_cursor);
       
       if (z115changes.length) {
