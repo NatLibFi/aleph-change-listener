@@ -142,7 +142,7 @@ function parseZ106Row(row) {
     changeLevel: Z106_LEVEL,
     date: parseDate(Z106_UPDATE_DATE, Z106_TIME),
     library: Z106_LIBRARY,
-    count: row.count ? row.count : 1
+    count: row.COUNT ? row.COUNT : 1
   };
 }
 
