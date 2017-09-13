@@ -4,19 +4,25 @@ function create(interval, fn) {
   let isRunning = false;
   let timeoutHandle;
 
+  let currentAction;
+
   async function poll() {
     isRunning = true;
-    await fn();
+    currentAction = fn();
+    await currentAction;
+
     if (isRunning) {
       debug(`Waiting ${interval}ms before next poll`);
       timeoutHandle = setTimeout(poll, interval);
     }
   }
 
-  function stop() {
+  async function stop() {
     clearTimeout(timeoutHandle);
     isRunning = false;
+    await currentAction;
     debug('Poller stopped');
+    
   }
 
   return {
