@@ -39,7 +39,6 @@ function create(base, stashPrefix='stash') {
     const rows = await utils.readAllRows(result.resultSet);
 
     const changes = rows.map(parseZ106Row);
-    console.log(changes);
     return changes;    
   }
 
