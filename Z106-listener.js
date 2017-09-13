@@ -28,10 +28,18 @@ function create(base, stashPrefix='stash') {
     const date = sinceDate.format('YYYYMMDD');
     const time = sinceDate.format('HHmm');
 
-    const result = await connection.execute(`select * from ${base}.z106 where Z106_UPDATE_DATE = :dateVar AND Z106_TIME = :timeVar ORDER BY Z106_UPDATE_DATE, Z106_TIME ASC`, [date, time], {resultSet: true});
+    const query = `
+    select Z106_REC_KEY, Z106_SECONDARY_KEY, Z106_CATALOGER, Z106_LEVEL, Z106_UPDATE_DATE, Z106_LIBRARY, Z106_TIME, count(*) AS COUNT 
+    from ${base}.z106 where Z106_UPDATE_DATE = :dateVar AND Z106_TIME = :timeVar 
+    group by Z106_REC_KEY, Z106_SECONDARY_KEY, Z106_CATALOGER, Z106_LEVEL, Z106_UPDATE_DATE, Z106_LIBRARY, Z106_TIME
+    ORDER BY Z106_UPDATE_DATE, Z106_TIME ASC
+    `;
+
+    const result = await connection.execute(query, [date, time], {resultSet: true});
     const rows = await utils.readAllRows(result.resultSet);
 
     const changes = rows.map(parseZ106Row);
+    console.log(changes);
     return changes;    
   }
 
@@ -134,7 +142,8 @@ function parseZ106Row(row) {
     user: Z106_CATALOGER && Z106_CATALOGER.trim(),
     changeLevel: Z106_LEVEL,
     date: parseDate(Z106_UPDATE_DATE, Z106_TIME),
-    library: Z106_LIBRARY
+    library: Z106_LIBRARY,
+    count: row.count ? row.count : 1
   };
 }
 
