@@ -16,6 +16,7 @@ function create(base, stashPrefix='stash') {
 
     const result = await connection.execute(`select * from ${base}.z106 where Z106_UPDATE_DATE > :dateVar OR (Z106_UPDATE_DATE = :dateVar AND Z106_TIME > :timeVar) ORDER BY Z106_UPDATE_DATE, Z106_TIME ASC`, [date, date, time], {resultSet: true});
     const nextRow = await result.resultSet.getRow();
+    await result.resultSet.close();
     if (nextRow === null) {
       return null;
     }
@@ -83,6 +84,7 @@ function create(base, stashPrefix='stash') {
     debug('Querying default value for the cursor.');
     const result = await connection.execute(`select * from ${base}.z106 ORDER BY Z106_UPDATE_DATE DESC, Z106_TIME DESC`, [], {resultSet: true});
     const latestChangeRow = await result.resultSet.getRow();
+    await result.resultSet.close();
     if (latestChangeRow === null) {
       return moment.now();
     }

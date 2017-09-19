@@ -13,6 +13,7 @@ async function getNextChangeId(base, connection, changeId) {
 
   const result = await connection.execute(`select * from ${base}.Z115 where Z115_REC_KEY > :sinceChangeId ORDER BY Z115_REC_KEY ASC`, [changeId], {resultSet: true});
   const nextRow = await result.resultSet.getRow();
+  await result.resultSet.close();
   if (nextRow === null) {
     return null;
   }
@@ -80,6 +81,7 @@ async function getDefaultCursor(base, connection) {
   debug('Querying default value for the cursor.');
   const result = await connection.execute(`select max(Z115_REC_KEY) as CHANGEID from ${base}.Z115`, [], {resultSet: true});
   const latestChangeRow = await result.resultSet.getRow();
+  await result.resultSet.close();
   const latestChangeId = latestChangeRow.CHANGEID;
   return latestChangeId;
 }
