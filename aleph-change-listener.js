@@ -150,9 +150,7 @@ async function create(connection, options, onChangeCallback) {
 
   function handleChanges(changes) {
     debug('handleChanges', changes);
-    logger.log(`Emitting ${changes.length} changes.`);
     if (onChangeCallback) {
-            
       return onChangeCallback.call(null, changes);
     }
   }
