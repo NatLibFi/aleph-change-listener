@@ -11,8 +11,8 @@
   },
   "license": "Apache-2.0",
   "version": "1.0.0",
-  "engines": { 
-    "node": ">= 7.10.0" 
+  "engines": {
+    "node": ">= 7.10.0"
   },
   "main": "aleph-change-listener.js",
   "scripts": {
@@ -29,6 +29,7 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "mocha": "^3.4.1",
+    "proxyquire": "^1.8.0",
     "sinon": "^2.3.1"
   }
 }

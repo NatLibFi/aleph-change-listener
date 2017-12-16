@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+
+const proxyquire = require('proxyquire').noCallThru();
+const AlephChangeListener = proxyquire('./aleph-change-listener', { 'oracledb': {} });
+
 const _ = require('lodash');
 const sinon = require('sinon');
 const expect = require('chai').expect;
 const fs = require('fs');
-const AlephChangeListener = require('./aleph-change-listener');
 const debug = require('debug')('aleph-change-listener');
 
 const Z115Listener = require('./Z115-listener');
