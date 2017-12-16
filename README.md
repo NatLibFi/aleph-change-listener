@@ -1,4 +1,4 @@
-# A module to listen for record changes in Aleph ILS [![NPM Version](https://img.shields.io/npm/v/@natlibfi/aleph-change-listener.svg)](https://npmjs.org/package/@natlibfi/aleph-change-listener) [![Build Status](https://travis-ci.org/NatLibFi/aleph-change-listener.svg)](https://travis-ci.org/NatLibFi/aleph-change-listener) [![Test Coverage](https://codeclimate.com/github/NatLibFi/aleph-change-listener/badges/coverage.svg)](https://codeclimate.com/github/NatLibFi/aleph-change-listener/coverage)
+# A module to listen for record changes in Aleph ILS [![NPM Version](https://img.shields.io/npm/v/@natlibfi/aleph-change-listener.svg)](https://npmjs.org/package/@natlibfi/aleph-change-listener) [![Build Status](https://travis-ci.org/NatLibFi/aleph-change-listener.svg)](https://travis-ci.org/NatLibFi/aleph-change-listener)
 
 A module to listen for record changes in Aleph ILS
 
