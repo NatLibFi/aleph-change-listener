@@ -1,16 +1,24 @@
 {
-  "name": "aleph-change-listener",
+  "name": "@natlibfi/aleph-change-listener",
+  "description": "A module to listen for record changes in Aleph ILS",
+  "homepage": "https://github.com/natlibfi/aleph-change-listener-melinda",
+  "bugs": {
+    "url": "https://github.com/natlibfi/aleph-change-listener-melinda/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:natlibfi/aleph-change-listener-melinda.git"
+  },
+  "license": "Apache-2.0",
   "version": "1.0.0",
-  "description": "",
+  "engines": { 
+    "node": ">= 7.10.0" 
+  },
   "main": "aleph-change-listener.js",
   "scripts": {
     "test": "mocha *.spec.js",
-    "test:watch": "mocha *.spec.js -w"
-  },
-  "author": "Pasi Tuominen",
-  "license": "ISC",
-  "engines": { 
-    "node": ">= 7.10.0" 
+    "test:watch": "mocha *.spec.js -w",
+    "publish-to-npm": "npm test && npm publish --access=public"
   },
   "dependencies": {
     "debug": "^2.6.8",
@@ -22,9 +30,5 @@
     "chai": "^3.5.0",
     "mocha": "^3.4.1",
     "sinon": "^2.3.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/NatLibFi/aleph-change-listener.git"
   }
 }
