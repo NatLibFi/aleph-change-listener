@@ -196,7 +196,7 @@ async function create(connection, options, onChangeCallback) {
       const changesQueue = JSON.parse(fs.readFileSync(CHANGES_QUEUE_FILE, 'utf8'));
 
       const momentizeChangeMetaDate = (change, ZDB) => {
-        const date = _.get(change, ['meta', ZDB]);
+        const date = _.get(change, ['meta', ZDB, 'date']);
         if (date) {
           _.set(change, ['meta', ZDB, 'date'], moment(date));
         }
