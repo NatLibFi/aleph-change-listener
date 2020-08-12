@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 University Of Helsinki (The National Library Of Finland)
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ describe('aleph-change-listener', () => {
 
     sandbox.stub(Z115Listener, 'getDefaultCursor').callsFake(() => { });
     sandbox.stub(Z115Listener, 'getChangesSinceId').callsFake(Z115getChangesSinceId);
-    sandbox.stub(Z106Listener, 'create').callsFake(() => { 
+    sandbox.stub(Z106Listener, 'create').callsFake(() => {
       return {
         getDefaultCursor: () => {},
         getChangesSinceDate: Z116getChangesSinceDate
@@ -112,13 +112,13 @@ describe('aleph-change-listener', () => {
   it('Given two non-empty polls, it should emit changes from first polling and any changes from the second polling if it is about same record', async () => {
     Z115getChangesSinceId.onCall(0).returns([fakeChange('001', 'lib1')]);
     Z116getChangesSinceDate.onCall(0).returns({changes: [], nextCursor: null });
-    
+
     Z115getChangesSinceId.onCall(1).returns([fakeChange('002', 'lib1')]);
     Z116getChangesSinceDate.onCall(1).returns({ changes: [fakeChange('001', 'lib1')], nextCursor: null});
-    
+
     Z115getChangesSinceId.onCall(2).returns([]);
     Z116getChangesSinceDate.onCall(2).returns({changes: [], nextCursor: null });
-    
+
     await pollAction();
     await pollAction();
     await pollAction();

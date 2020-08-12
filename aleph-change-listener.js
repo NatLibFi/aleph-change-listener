@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 University Of Helsinki (The National Library Of Finland)
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,10 +39,10 @@ async function create(connection, options, onChangeCallback) {
   const CURSOR_SAVE_FILE = _.get(options, 'cursorSaveFile', DEFAULT_CURSOR_SAVE_FILE);
   const Z106_STASH_PREFIX = _.get(options, 'Z106StashPrefix', DEFAULT_Z106_STASH_PREFIX);
   const CHANGES_QUEUE_FILE = _.get(options, 'changesQueueSaveFile', DEFAULT_CHANGES_QUEUE_FILE);
-  const logger = _.get(options, 'logger', { log: console.log.bind(console) }); //eslint-disable-line no-console
+  const logger = _.get(options, 'logger', {log: console.log.bind(console)}); //eslint-disable-line no-console
 
   const Z115Base = _.get(options, 'Z115Base');
-  
+
   debug(`Bases for Z106 ${Z106Bases}`);
   debug(`Polling interval ${POLL_INTERVAL_MS}`);
   debug(`Using cursor file ${CURSOR_SAVE_FILE}`);
@@ -60,7 +60,7 @@ async function create(connection, options, onChangeCallback) {
       initialCursors[Z106CursorKeys[base]] = await Z106Listeners[base].getDefaultCursor(connection);
     }
   }));
-  
+
   if (!initialCursors.Z115_cursor) {
     logger.log('info', 'Loading default value for Z115 cursor');
     initialCursors.Z115_cursor = await Z115Listener.getDefaultCursor(Z115Base, connection);
@@ -72,38 +72,38 @@ async function create(connection, options, onChangeCallback) {
 
     let cursors = _.cloneDeep(initialCursors);
 
-    return async function() {
+    return async function () {
 
-      
+
       const z106changes = await Promise.all(Z106Bases.map(async base => {
         const cursor = cursors[Z106CursorKeys[base]];
         logger.log('verbose', `Loading changes from Z106/${base} at ${cursor}`);
-        const { changes, nextCursor } = await Z106Listeners[base].getChangesSinceDate(connection, cursor);
+        const {changes, nextCursor} = await Z106Listeners[base].getChangesSinceDate(connection, cursor);
         if (changes.length) {
-          cursors[Z106CursorKeys[base]] = nextCursor;  
+          cursors[Z106CursorKeys[base]] = nextCursor;
         }
-        
+
         return changes;
       }));
-      
+
       logger.log('verbose', `Loading changes from Z115 at ${cursors.Z115_cursor}`);
       const z115changes = await Z115Listener.getChangesSinceId(Z115Base, connection, cursors.Z115_cursor);
-      
+
       if (z115changes.length) {
         cursors.Z115_cursor = _.last(z115changes).changeId;
       }
-      
+
       Z106Bases.forEach(base => {
         debug(`Cursor ${Z106CursorKeys[base]} is ${cursors[Z106CursorKeys[base]]}`);
       });
-      
+
       debug(`Z115_cursor is ${cursors.Z115_cursor}`);
-      
+
       await combineChanges(_.flatten(z106changes), z115changes);
 
       // write cursors to file for next startup
       saveCursors(CURSOR_SAVE_FILE, cursors);
-      
+
     };
   }
 
@@ -133,14 +133,14 @@ async function create(connection, options, onChangeCallback) {
     // new changes came
     const latestChanges = _.concat(z106ForMerge, z115ForMerge);
     // load changes-queue from file
-    // changeQueue is like: [[ch1, ch2],[ch3, ch2, ch4]] 
+    // changeQueue is like: [[ch1, ch2],[ch3, ch2, ch4]]
     const changesQueue = loadChangesQueue();
     // push new changes to queue
     changesQueue.push(latestChanges);
     debug('changesQueue', changesQueue);
     if (changesQueue.length > 1) {
 
-      // shift/pop earliest changes from queue, 
+      // shift/pop earliest changes from queue,
       const oldestChanges = changesQueue.shift();
       // make keygroup of earliset changes
       const key = change => `${change.recordId}-${change.library}`;
@@ -177,13 +177,13 @@ async function create(connection, options, onChangeCallback) {
         cursors[Z106CursorKeys[base]] = moment(cursors[Z106CursorKeys[base]]);
       });
       return cursors;
-    } catch(error) {
+    } catch (error) {
       if (error.code === 'ENOENT') {
         logger.log('warn', 'Cursor file not found, starting without cursor file.');
       } else {
         logger.log('error', `Failed to load cursors from file: ${error.message}`);
       }
-      return {}; 
+      return {};
     }
   }
 
@@ -209,7 +209,7 @@ async function create(connection, options, onChangeCallback) {
 
       debug('reading changesqueue', changesQueue);
       return changesQueue;
-    } catch(error) {
+    } catch (error) {
       return [];
     }
   }
@@ -222,7 +222,7 @@ async function create(connection, options, onChangeCallback) {
     start: poller.start,
     stop: poller.stop
   };
-  
+
 }
 
 module.exports = {
