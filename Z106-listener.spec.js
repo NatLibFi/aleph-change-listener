@@ -16,6 +16,7 @@
 const _ = require('lodash');
 const expect = require('chai').expect;
 const sinon = require('sinon');
+let sandbox = require('sinon').createSandbox();
 const moment = require('moment');
 const fs = require('fs');
 
@@ -78,10 +79,8 @@ describe('Z106-Listener', () => {
   let fakeDate;
 
   let z106Listener;
-  let sandbox;
 
   beforeEach(() => {
-    sandbox = sinon.sandbox.create();
     sandbox.stub(fs, 'readFileSync').callsFake(sinon.stub().returns('[]'));
     sandbox.stub(fs, 'writeFile').callsFake(sinon.stub().yields(null));
 
@@ -132,8 +131,5 @@ describe('Z106-Listener', () => {
 
     const changesAfterSecondRequest = await z106Listener.getChangesSinceDate(fakeConnection, fakeDate);
     expect(_.map(changesAfterSecondRequest.changes, 'secondaryKey')).to.eql(['CHANGE-3', 'CHANGE-4']);
-
-
   });
-
 });

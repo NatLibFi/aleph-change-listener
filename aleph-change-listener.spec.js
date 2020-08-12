@@ -19,6 +19,7 @@ const AlephChangeListener = proxyquire('./aleph-change-listener', { 'oracledb': 
 
 const _ = require('lodash');
 const sinon = require('sinon');
+let sandbox = require('sinon').createSandbox();
 const expect = require('chai').expect;
 const fs = require('fs');
 const debug = require('debug')('aleph-change-listener');
@@ -40,10 +41,8 @@ describe('aleph-change-listener', () => {
   let Z115getChangesSinceId;
   let Z116getChangesSinceDate;
   let changesQueueData;
-  let sandbox;
 
   beforeEach(async () => {
-    sandbox = sinon.sandbox.create();
 
     changesQueueData = '[]';
     onChangeCb = sinon.spy();
@@ -76,8 +75,8 @@ describe('aleph-change-listener', () => {
     });
 
     await AlephChangeListener.create(fakeConnection, options, onChangeCb);
-
   });
+
   afterEach(() => sandbox.restore());
 
   it('First call should keep changes stashed', async () => {
@@ -129,11 +128,9 @@ describe('aleph-change-listener', () => {
 
     expect(firstEmittedChanges).to.eql([ fakeChange('001', 'lib1') ]);
     expect(secondEmittedChanges).to.eql([ fakeChange('002', 'lib1') ]);
-
-
   });
-
 });
+
 function fakeChange(recordId, library) {
   return { recordId, library };
 }
