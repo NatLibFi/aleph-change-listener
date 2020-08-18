@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 University Of Helsinki (The National Library Of Finland)
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,13 +19,13 @@ const moment = require('moment');
 const createDebug = require('debug');
 const utils = require('./utils');
 
-function create(base, stashPrefix='stash') {
+function create(base, stashPrefix = 'stash') {
   const debug = createDebug(`Z106-Listener-for${base}`);
   const persistedChangesFilename = `${stashPrefix}_${base}`;
   let alreadyPassedChanges = readPersistedChanges(persistedChangesFilename);
 
   async function getNextDate(connection, sinceDate) {
-    
+
     const date = sinceDate.format('YYYYMMDD');
     const time = sinceDate.format('HHmm');
 
@@ -35,7 +35,7 @@ function create(base, stashPrefix='stash') {
     if (nextRow === null) {
       return null;
     }
-    
+
     const row = parseZ106Row(nextRow);
     return row.date;
   }
@@ -45,8 +45,8 @@ function create(base, stashPrefix='stash') {
     const time = sinceDate.format('HHmm');
 
     const query = `
-    select Z106_REC_KEY, Z106_SECONDARY_KEY, Z106_CATALOGER, Z106_LEVEL, Z106_UPDATE_DATE, Z106_LIBRARY, Z106_TIME, count(*) AS COUNT 
-    from ${base}.z106 where Z106_UPDATE_DATE = :dateVar AND Z106_TIME = :timeVar 
+    select Z106_REC_KEY, Z106_SECONDARY_KEY, Z106_CATALOGER, Z106_LEVEL, Z106_UPDATE_DATE, Z106_LIBRARY, Z106_TIME, count(*) AS COUNT
+    from ${base}.z106 where Z106_UPDATE_DATE = :dateVar AND Z106_TIME = :timeVar
     group by Z106_REC_KEY, Z106_SECONDARY_KEY, Z106_CATALOGER, Z106_LEVEL, Z106_UPDATE_DATE, Z106_LIBRARY, Z106_TIME
     ORDER BY Z106_UPDATE_DATE, Z106_TIME ASC
     `;
@@ -55,7 +55,7 @@ function create(base, stashPrefix='stash') {
     const rows = await utils.readAllRows(result.resultSet);
 
     const changes = rows.map(parseZ106Row);
-    return changes;    
+    return changes;
   }
 
   async function getChangesSinceDate(connection, sinceDate) {
@@ -64,10 +64,10 @@ function create(base, stashPrefix='stash') {
     // Fetch current minute and next minute
 
     const currentDateChanges = await getChangesAtDate(connection, sinceDate);
-    
+
     const nextDate = await getNextDate(connection, sinceDate);
     debug(`Fetching changes at ${nextDate}`);
-    
+
     let nextDateChanges = [];
     if (nextDate) {
       nextDateChanges = await getChangesAtDate(connection, nextDate);
@@ -75,20 +75,20 @@ function create(base, stashPrefix='stash') {
 
     debug(`Changes at ${sinceDate}: ${currentDateChanges.length}`);
     debug(`Changes at ${nextDate}: ${nextDateChanges.length}`);
-    
+
     const changes = _.concat(currentDateChanges, nextDateChanges);
-    
+
     // Since resolution is 1 minute, persist result from last minute to file
-    // after fetch, filter out stuff that was persisted 
+    // after fetch, filter out stuff that was persisted
 
     const dateOfLastChange = _.get(_.last(changes), 'date');
     const setOfChangesToPersist = _.takeRightWhile(changes, change => dateOfLastChange.isSame(change.date));
     const newChanges = _.differenceWith(changes, alreadyPassedChanges, isEqualChangeObject);
     alreadyPassedChanges = setOfChangesToPersist;
     await writePersistedChanges(persistedChangesFilename, setOfChangesToPersist);
-    
+
     debug(`new changes: ${newChanges.length}`);
-    
+
     return {
       changes: _.uniqWith(newChanges, isEqualChangeObject),
       nextCursor: dateOfLastChange
@@ -107,7 +107,7 @@ function create(base, stashPrefix='stash') {
 
     // Call getChangesSinceDate to persist changes of current minute to
     // ensure that the changes from current minute are not returned when cursor is first used.
-    const { nextCursor } = await getChangesSinceDate(connection, latestChange.date);
+    const {nextCursor} = await getChangesSinceDate(connection, latestChange.date);
     return nextCursor;
   }
 
@@ -116,9 +116,9 @@ function create(base, stashPrefix='stash') {
       const data = fs.readFileSync(file, 'utf8');
       const changes = JSON.parse(data);
       return changes.map(change => {
-        return Object.assign(change, { date: moment(change.date) });
+        return Object.assign(change, {date: moment(change.date)});
       });
-    } catch(error) {
+    } catch (error) {
       return [];
     }
   }
@@ -130,7 +130,7 @@ function create(base, stashPrefix='stash') {
         if (err) {
           reject(err);
         } else {
-          resolve();  
+          resolve();
         }
       });
     });
@@ -150,8 +150,8 @@ function isEqualChangeObject(a, b) {
 
 
 function parseZ106Row(row) {
-  const { Z106_REC_KEY, Z106_SECONDARY_KEY, Z106_CATALOGER, Z106_LEVEL, Z106_UPDATE_DATE, Z106_LIBRARY, Z106_TIME } = row;
-  
+  const {Z106_REC_KEY, Z106_SECONDARY_KEY, Z106_CATALOGER, Z106_LEVEL, Z106_UPDATE_DATE, Z106_LIBRARY, Z106_TIME} = row;
+
   return {
     recordId: Z106_REC_KEY,
     secondaryKey: Z106_SECONDARY_KEY,
@@ -165,7 +165,7 @@ function parseZ106Row(row) {
 
 
 function parseDate(dateString, timeNumber) {
-  
+
   if (dateString.length !== 8) {
     throw new Error(`Incorrect format for aleph date ${dateString}`);
   }
@@ -175,7 +175,7 @@ function parseDate(dateString, timeNumber) {
   if (timeString.length !== 4) {
     throw new Error(`Incorrect format for aleph time ${timeString}`);
   }
-  
+
   return moment(`${dateString} ${timeString}`, 'YYYYMMDD HHmmssSS');
 }
 
