@@ -1,13 +1,13 @@
 {
   "name": "@natlibfi/aleph-change-listener",
   "description": "A module to listen for record changes in Aleph ILS",
-  "homepage": "https://github.com/natlibfi/aleph-change-listener-melinda",
+  "homepage": "https://github.com/natlibfi/aleph-change-listener",
   "bugs": {
-    "url": "https://github.com/natlibfi/aleph-change-listener-melinda/issues"
+    "url": "https://github.com/natlibfi/aleph-change-listener/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:natlibfi/aleph-change-listener-melinda.git"
+    "url": "git@github.com:natlibfi/aleph-change-listener.git"
   },
   "license": "Apache-2.0",
   "version": "1.0.1",
