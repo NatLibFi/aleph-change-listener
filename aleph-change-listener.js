@@ -52,6 +52,7 @@ async function create(connection, options, onChangeCallback) {
 
 
   const initialCursors = loadCursors(CURSOR_SAVE_FILE);
+  logger.log('debug', `InitialCursors: ${JSON.stringify(initialCursors)}`);
 
   // if initialCursors are not initialzied, then check from db for current cursors.
   await Promise.all(Z106Bases.map(async base => {
