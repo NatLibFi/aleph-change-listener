@@ -43,9 +43,9 @@ async function create(connection, options, onChangeCallback) {
 
   const Z115Base = _.get(options, 'Z115Base');
 
-  debug(`Bases for Z106 ${Z106Bases}`);
-  debug(`Polling interval ${POLL_INTERVAL_MS}`);
-  debug(`Using cursor file ${CURSOR_SAVE_FILE}`);
+  logger.debug(`Bases for Z106 ${Z106Bases}`);
+  logger.debug(`Polling interval ${POLL_INTERVAL_MS}`);
+  logger.debug(`Using cursor file ${CURSOR_SAVE_FILE}`);
 
   const Z106CursorKeys = Z106Bases.reduce((keys, base) => _.set(keys, base, `Z106_FOR_${base}`), {});
   const Z106Listeners = Z106Bases.reduce((listeners, base) => _.set(listeners, base, Z106Listener.create(base, Z106_STASH_PREFIX)), {});
@@ -95,10 +95,10 @@ async function create(connection, options, onChangeCallback) {
       }
 
       Z106Bases.forEach(base => {
-        debug(`Cursor ${Z106CursorKeys[base]} is ${cursors[Z106CursorKeys[base]]}`);
+        logger.debug(`Cursor ${Z106CursorKeys[base]} is ${cursors[Z106CursorKeys[base]]}`);
       });
 
-      debug(`Z115_cursor is ${cursors.Z115_cursor}`);
+      logger.debug(`Z115_cursor is ${cursors.Z115_cursor}`);
 
       await combineChanges(_.flatten(z106changes), z115changes);
 
@@ -109,7 +109,7 @@ async function create(connection, options, onChangeCallback) {
   }
 
   async function combineChanges(z106changes, z115changes) {
-    debug(`z106changes: ${z106changes.length}, z115changes: ${z115changes.length}`);
+    logger.debug(`z106changes: ${z106changes.length}, z115changes: ${z115changes.length}`);
 
     const z106ForMerge = z106changes.map(change => {
       return {
@@ -138,7 +138,7 @@ async function create(connection, options, onChangeCallback) {
     const changesQueue = loadChangesQueue();
     // push new changes to queue
     changesQueue.push(latestChanges);
-    debug('changesQueue', changesQueue);
+    logger.debug('changesQueue', changesQueue);
     if (changesQueue.length > 1) {
 
       // shift/pop earliest changes from queue,
@@ -165,7 +165,7 @@ async function create(connection, options, onChangeCallback) {
   }
 
   function handleChanges(changes) {
-    debug('handleChanges', changes);
+    logger.debug('handleChanges', changes);
     if (onChangeCallback) {
       return onChangeCallback.call(null, changes);
     }
@@ -208,14 +208,14 @@ async function create(connection, options, onChangeCallback) {
         momentizeChangeMetaDate(change, 'Z115');
       });
 
-      debug('reading changesqueue', changesQueue);
+      logger.debug('reading changesqueue', changesQueue);
       return changesQueue;
     } catch (error) {
       return [];
     }
   }
   function saveChangesQueue(changesQueue) {
-    debug('writing changesqueue', changesQueue);
+    logger.debug('writing changesqueue', changesQueue);
     fs.writeFileSync(CHANGES_QUEUE_FILE, JSON.stringify(changesQueue), 'utf8');
   }
 
