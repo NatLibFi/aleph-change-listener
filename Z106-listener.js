@@ -59,22 +59,22 @@ function create(base, stashPrefix = 'stash') {
   }
 
   async function getChangesSinceDate(connection, sinceDate) {
-    logger.debug(`Fetching changes at ${sinceDate}`);
+    debug(`Fetching changes at ${sinceDate}`);
 
     // Fetch current minute and next minute
 
     const currentDateChanges = await getChangesAtDate(connection, sinceDate);
 
     const nextDate = await getNextDate(connection, sinceDate);
-    logger.debug(`Fetching changes at ${nextDate}`);
+    debug(`Fetching changes at ${nextDate}`);
 
     let nextDateChanges = [];
     if (nextDate) {
       nextDateChanges = await getChangesAtDate(connection, nextDate);
     }
 
-    logger.debug(`Changes at ${sinceDate}: ${currentDateChanges.length}`);
-    logger.debug(`Changes at ${nextDate}: ${nextDateChanges.length}`);
+    debug(`Changes at ${sinceDate}: ${currentDateChanges.length}`);
+    debug(`Changes at ${nextDate}: ${nextDateChanges.length}`);
 
     const changes = _.concat(currentDateChanges, nextDateChanges);
 
@@ -87,7 +87,7 @@ function create(base, stashPrefix = 'stash') {
     alreadyPassedChanges = setOfChangesToPersist;
     await writePersistedChanges(persistedChangesFilename, setOfChangesToPersist);
 
-    logger.debug(`new changes: ${newChanges.length}`);
+    debug(`new changes: ${newChanges.length}`);
 
     return {
       changes: _.uniqWith(newChanges, isEqualChangeObject),
@@ -96,7 +96,7 @@ function create(base, stashPrefix = 'stash') {
   }
 
   async function getDefaultCursor(connection) {
-    logger.debug('Querying default value for the cursor.');
+    debug('Querying default value for the cursor.');
     const result = await connection.execute(`select * from ${base}.z106 ORDER BY Z106_UPDATE_DATE DESC, Z106_TIME DESC`, [], {resultSet: true});
     const latestChangeRow = await result.resultSet.getRow();
     await result.resultSet.close();
@@ -124,7 +124,7 @@ function create(base, stashPrefix = 'stash') {
   }
 
   function writePersistedChanges(file, data) {
-    logger.debug(`Remembering ${data.length} changes`);
+    debug(`Remembering ${data.length} changes`);
     return new Promise((resolve, reject) => {
       fs.writeFile(file, JSON.stringify(data), 'utf8', (err) => {
         if (err) {

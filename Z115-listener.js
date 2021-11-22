@@ -39,7 +39,7 @@ async function getNextChangeId(base, connection, changeId) {
 }
 
 async function getChangesSinceId(base, connection, sinceChangeId) {
-  logger.debug(`Fetching changes since ${sinceChangeId}`);
+  debug(`Fetching changes since ${sinceChangeId}`);
 
   const nextChangeId = await getNextChangeId(base, connection, sinceChangeId);
   if (nextChangeId === null) {
@@ -57,7 +57,7 @@ async function getChangesSinceId(base, connection, sinceChangeId) {
 }
 
 async function getChangesSinceDate(base, connection, sinceDate) {
-  logger.debug(`Fetching changes since ${sinceDate}`);
+  debug(`Fetching changes since ${sinceDate}`);
   const date = sinceDate.format('YYYYMMDD');
   const time = sinceDate.format('HHmmssSS');
   const result = await connection.execute(`select /*+ INDEX(Z115_today_date Z115_DATE_ID) INDEX(Z115_today_time Z115_TIME_ID) */ * from ${base}.Z115 where Z115_today_date >= :datevar and z115_today_time > :timevar ORDER BY Z115_today_date, z115_today_time ASC`, [date, time], {resultSet: true});
@@ -93,7 +93,7 @@ function compactChanges(changes) {
 }
 
 async function getDefaultCursor(base, connection) {
-  logger.debug('Querying default value for the cursor.');
+  debug('Querying default value for the cursor.');
   const result = await connection.execute(`select max(Z115_REC_KEY) as CHANGEID from ${base}.Z115`, [], {resultSet: true});
   const latestChangeRow = await result.resultSet.getRow();
   await result.resultSet.close();
