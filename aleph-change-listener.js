@@ -80,6 +80,7 @@ async function create(connection, options, onChangeCallback) {
         const cursor = cursors[Z106CursorKeys[base]];
         logger.log('verbose', `Loading changes from Z106/${base} at ${cursor}`);
         const {changes, nextCursor} = await Z106Listeners[base].getChangesSinceDate(connection, cursor);
+        logger.log('debug', `Result (${changes.length}): ${JSON.stringify(changes)}, ${nextCursor}`);
         if (changes.length) {
           cursors[Z106CursorKeys[base]] = nextCursor;
         }
@@ -89,6 +90,7 @@ async function create(connection, options, onChangeCallback) {
 
       logger.log('verbose', `Loading changes from Z115 at ${cursors.Z115_cursor}`);
       const z115changes = await Z115Listener.getChangesSinceId(Z115Base, connection, cursors.Z115_cursor);
+      logger.log('debug', `Result (${z115changes.length}): ${JSON.stringify(z115changes)}`);
 
       if (z115changes.length) {
         cursors.Z115_cursor = _.last(z115changes).changeId;
@@ -109,6 +111,7 @@ async function create(connection, options, onChangeCallback) {
   }
 
   async function combineChanges(z106changes, z115changes) {
+    logger.log('debug', `Combining changes`);
     debug(`z106changes: ${z106changes.length}, z115changes: ${z115changes.length}`);
 
     const z106ForMerge = z106changes.map(change => {
@@ -139,6 +142,7 @@ async function create(connection, options, onChangeCallback) {
     // push new changes to queue
     changesQueue.push(latestChanges);
     debug('changesQueue', changesQueue);
+    logger.log('debug', `ChangesQueue: ${changesQueue.length}`);
     if (changesQueue.length > 1) {
 
       // shift/pop earliest changes from queue,
@@ -165,10 +169,12 @@ async function create(connection, options, onChangeCallback) {
   }
 
   function handleChanges(changes) {
+    logger.log('debug', `Handling changes (${JSON.stringify(changes)})`);
     debug('handleChanges', changes);
     if (onChangeCallback) {
       return onChangeCallback.call(null, changes);
     }
+    logger.log('debug', `No onChangeCallback!`);
   }
 
   function loadCursors(CURSOR_SAVE_FILE) {
